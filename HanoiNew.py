@@ -4,6 +4,11 @@ import tkMessageBox
 
 root = Tk()
 stepList = []
+gameStatus = "turtle"
+currentStatus = "AI"
+
+def getGameStatus():
+    return gameStatus
 
 class Disc(RawTurtle):
     """Hanoi disc, a RawTurtle object on a TurtleScreen."""
@@ -27,7 +32,9 @@ class Disc(RawTurtle):
     def addValue(self, v):
         self.dValue = v
 
+
 class WinData:
+    "data required for high score table"
     def __init__(self, discs, count):
         self.numOfDiscs = discs
         self.numOfMove = count
@@ -38,28 +45,28 @@ class WinData:
     def getNumOfMove(self):
         return self.numOfMove
 
+class MyMoves:
+    def __init__(self, src, dest):
+        self.srcTower = src
+        self.destTower = dest
+        self.srcTowerPeekValue = src.peek()
+        self.destTowerPeekValue = dest.peek()
+
+    def getSrcTower(self):
+        return self.srcTower
+
+    def getDestTower(self):
+        return self.destTower
+
+    def getSrcTowerPeek(self):
+        return self.srcTowerPeekValue
+
+    def getDestTowerPeek(self):
+        return self.destTowerPeekValue
+
+
 
 class Tower():
-    "Hanoi tower, a subclass of built-in type list"
-    '''
-    def __init__(self, x):
-        "create an empty tower. x is x-position of peg"
-        self.x = x
-
-
-    def push(self, d):
-        d.setx(self.x)
-        d.sety(-70 + 10 * len(self))
-        self.append(d)
-
-    def pop(self, y=90):
-        d = list.pop(self)
-        d.sety(y)
-        return d
-
-    def peek(self):
-        return list
-    '''
     "Hanoi tower, a subclass of built-in type list"
 
     def __init__(self, x):
@@ -70,13 +77,43 @@ class Tower():
 
 
     def push(self, d):
-        d.setx(self.x)
+        global gameStatus
+        if gameStatus is "turtle":
+            d.setx(self.x)
+            d.sety(-70 + 10 * len(self.data))
+            self.top += 1
+            self.data.append(d)
+        elif gameStatus is "withoutTurtle":
+            self.top += 1
+            self.data.append(d)
+
+        '''d.setx(self.x)
         d.sety(-70 + 10 * len(self.data))
         self.top += 1
-        self.data.append(d)
+        self.data.append(d)'''
 
 
     def pop(self, y=90):
+        global gameStatus
+        if gameStatus is "turtle":
+            if(self.top == -1): #If nothing in the stack
+                return
+            value = self.data[self.top]
+            d = value
+            d.sety(y)
+            del self.data[self.top]
+            self.top = self.top - 1
+
+            return d
+        elif gameStatus is "withoutTurtle":
+            if(self.top == -1): #If nothing in the stack
+                return
+            d = self.data[self.top]
+            del self.data[self.top]
+            self.top = self.top - 1
+
+            return d
+        '''
         if(self.top == -1): #If nothing in the stack
             return
         value = self.data[self.top]
@@ -86,6 +123,7 @@ class Tower():
         self.top = self.top - 1
 
         return d
+        '''
 
     def peek(self):
         if self.size() is 0 and self.top is -1:
@@ -105,7 +143,7 @@ class Tower():
 
     def copyFrom(self, aStack):
         #Copy all the elements and properties (include top value) from the input stack aStack to this stack
-        self.data = []
+        del self.data[:]
         for i in range(aStack.size()):
             self.data.append(aStack.peekAt(i))
         self.top = aStack.top
@@ -113,6 +151,15 @@ class Tower():
     def peekAt(self, i):
         #Return the value of the element at index i without removing it from the stack
         return self.data[i]
+
+    def isEqual(self, stack):
+        if((len(self.data))!= (stack.size())):
+            return False
+        else:
+            for i in range(len(self.data)):
+                if(self.data[i] != stack.data[i]):
+                    return False
+            return True
 
 
 class HanoiEngine:
@@ -124,11 +171,11 @@ class HanoiEngine:
         moveCntDisplay is a function with 1 parameter, which communicates
         the count of the actual move to the GUI containing the
         Hanoi-engine-canvas."""
+        global gameStatus
         self.highScoreArray = []
         self.combinedArray = []
         self.universalArray = []
 
-        self.minmoves = 0
         self.setCanvas = canvas
         self.ts = canvas
         self.ts.tracer(False)
@@ -152,6 +199,8 @@ class HanoiEngine:
         self.winCondition = False
 
         ''' elson code '''
+        gameStatus = "withoutTurtle"
+        self.currentStatus = "AI"
         self.samplemoves = [] # The set of move generate by AI
         self.usermoves = [] # The set of move user move
         self.finalmoves = [] # The final set of move
@@ -159,32 +208,21 @@ class HanoiEngine:
         self.minmoves = 0
         self.totalmoves = 0
 
-        self.startsource = Tower(0)
+        self.startsource = Tower(-140)
         self.starthelper = Tower(0)
-        self.starttarget = Tower(0)
-        self.goaltarget = Tower(0)
+        self.starttarget = Tower(140)
+        self.goaltarget = Tower(140)
+
+        self.AISource = Tower(-140)
+        self.AIHelper = Tower(0)
+        self.AITarget = Tower(140)
+
+        self.goalMoves = []
+        self.playerMoves = []
         ''' elson code '''
 
         self.numValue = 0
         self.discs = []
-
-        #print Disc(canvas)
-
-        #for x in range(11):
-        #    Disc(canvas).addValue(self.numValue)
-        #    self.numValue -= 1
-
-        #self.discs = [Disc(canvas) for i in range(10)]
-
-        #for x in range(nrOfDiscs):
-        #    self.numValue += 1
-        #    self.discs.append(Disc(canvas, self.numValue))
-
-
-        #print len(self.discs)
-
-        #for z in range(len(self.discs)):
-        #   print self.discs[z].getDiscValue()
 
         self.towerA = Tower(-140)
         self.towerB = Tower(0)
@@ -194,18 +232,12 @@ class HanoiEngine:
         print "B:", self.towerB.size(), "value:", self.towerB.peek()
         print "C:", self.towerC.size(), "value:", self.towerC.peek()
 
-        ''' elson code '''
-        self.startsource.copyFrom(self.towerA) # Save the start state
-        self.starthelper.copyFrom(self.towerB)
-        self.starttarget.copyFrom(self.towerC)
 
-        # Include the start state in sample moves set
-        self.samplemoves.append(self.startsource)
-        self.samplemoves.append(self.starthelper)
-        self.samplemoves.append(self.starttarget)
-        ''' elson code '''
 
         self.ts.tracer(True)
+
+    def getGameStatus(self):
+        return self.gameStatus
 
 
     #elson code
@@ -224,39 +256,59 @@ class HanoiEngine:
     #elson code
     def moveTower(self, disc, Beg, Aux, End):
 
+
+        global gameStatus
+
         if disc == 1:
             self.moveDisk(Beg, End)
-            self.minmoves += 1
-            self.samplemoves.append(self.savestate(self.towerA))
-            self.samplemoves.append(self.savestate(self.towerB))
-            self.samplemoves.append(self.savestate(self.towerC))
-            # printprogess(Beg, Aux, End)
+            if getGameStatus() is "turtle":
+                self.moveCnt += 1
+                self.moveDisplay(self.moveCnt)
+                self.samplemoves.append(self.savestate(self.towerA))
+                self.samplemoves.append(self.savestate(self.towerB))
+                self.samplemoves.append(self.savestate(self.towerC))
+            #print (Beg, Aux, End)
 
         else:
             self.moveTower(disc-1, Beg, End, Aux)
             self.moveTower(1, Beg, Aux, End)
             self.moveTower(disc-1, Aux, Beg, End)
 
-    #elson code
+
+
+    '''elson code'''
     # Move disk from the src stack to dest stack
     def moveDisk(self, frompole, topole):
         # print("moving disk from",frompole.gettitle(),"to",topole.gettitle())
-        if self.checkIfMoveValid(frompole, topole) is True:
-            topole.push(frompole.pop())
+        #if self.checkvalid(frompole, topole) is True:
+        #if getGameStatus() is "turtle":
 
-    #elson code
+        if self.currentStatus is "AI":
+            self.goalMoves.append(MyMoves(frompole, topole))
+        else:
+            self.playerMoves.append(MyMoves(frompole, topole))
+            self.moveCnt += 1
+        self.moveDisplay(self.moveCnt)
+        print("moving disk from ",frompole.peek()," to ",topole.peek())
+        topole.push(frompole.pop())
+        #self.moveCnt += 1
+        #self.moveDisplay(self.moveCnt)
+
+
+    '''elson code'''
     # generate the sample set of solutions
     def gensamplemove(self, source, helper, target):
-        self.moveTower(source.size()-1, source, helper, target)
+        self.moveTower(source.size(), source, helper, target)
 
-    #elson code
+    '''elson code'''
     # Check of the rules of Hanoi
     def checkvalid(self, frompole, topole):
-        if(frompole.size() == 1 or frompole == topole): # frompole is empty or frompole and topole is same
-            print "Invalid move"
+        if(frompole.size() == 0 or frompole == topole): # frompole is empty or frompole and topole is same
+            return False
         else:
-            if(topole.size() == 1 or frompole.peek() < topole.peek()): # topole is empty or from is smaller than to
-                self.moveDisk(frompole,topole)
+            if(topole.peek() is None or frompole.peek() < topole.peek()): # topole is empty or from is smaller than to
+
+                self.moveDisk(frompole, topole)
                 self.usermoves.append(self.savestate(self.towerA))
                 self.usermoves.append(self.savestate(self.towerB))
                 self.usermoves.append(self.savestate(self.towerC))
@@ -264,10 +316,13 @@ class HanoiEngine:
                 self.finalmoves.append(self.savestate(self.towerA))
                 self.finalmoves.append(self.savestate(self.towerB))
                 self.finalmoves.append(self.savestate(self.towerC))
-            else:
-                print "Invalid move"
+                return True
+            elif frompole.peek() > topole.peek():
+                return False
 
-    #elson code
+
+
+    '''elson code'''
     # Conver the string input to the variable of stack
     '''def convert(self, word):
         if(word == "a"):
@@ -277,27 +332,63 @@ class HanoiEngine:
         elif(word == "c"):
             return target'''
 
-    #elson code
+    '''elson code'''
     def findmatch(self):
         for i in range(len(self.usermoves)-1,0,-3):
-            # printprogess(usermoves[i-2], usermoves[i-1], usermoves[i])
+            #print (self.usermoves[i-2], self.usermoves[i-1], self.usermoves[i])
             if(i != len(self.usermoves)-1): # append the backtrack state, only add after first i loop
                 self.finalmoves.append(self.usermoves[i-2])
                 self.finalmoves.append(self.usermoves[i-1])
                 self.finalmoves.append(self.usermoves[i])
             for j in range(0, len(self.samplemoves), 3):
-                # printprogess(samplemoves[j], samplemoves[j+1], samplemoves[j+2])
+                #print (self.samplemoves[i-2], self.samplemoves[i-1], self.samplemoves[i])
                 if(self.usermoves[i-2].isEqual(self.samplemoves[j]) and self.usermoves[i-1].isEqual(self.samplemoves[j+1]) and self.usermoves[i].isEqual(self.samplemoves[j+2])):
                     index = j
                     return j
 
-    #elson code
+    '''elson code'''
     def solve(self):
+        global gameStatus
+        gameStatus = "turtle"
+        '''
         index = self.findmatch()
         for j in range(index+3,len(self.samplemoves),3): # append state after the match
             self.finalmoves.append(self.samplemoves[j])
             self.finalmoves.append(self.samplemoves[j+1])
             self.finalmoves.append(self.samplemoves[j+2])
+        '''
+
+        newArray = []
+        num = len(self.playerMoves)-1
+        for q in range(0, len(self.playerMoves)):
+            temp = self.playerMoves[q].srcTower
+            self.playerMoves[q].srcTower = self.playerMoves[q].destTower
+            self.playerMoves[q].destTower = temp
+            newArray.append(self.playerMoves[num])
+            num-=1
+
+        #print len(newArray)
+
+        self.speed = 8 % 10
+        self.setspeed()
+
+        for w in range(0, len(newArray)):
+            #print newArray[w]
+            self.move(newArray[w].srcTower, newArray[w].destTower)
+
+        self.speed = 3 % 10
+        self.setspeed()
+
+        for v in range(0, len(self.goalMoves)):
+            self.move(self.goalMoves[v].srcTower, self.goalMoves[v].destTower)
+
+
+
+        del newArray[:]
+        gameStatus = "turtle"
+        self.currentStatus = "AI"
+
+        return True
 
     def getTowerA(self):
         return self.towerA
@@ -312,15 +403,6 @@ class HanoiEngine:
     def setspeed(self):
         for disc in self.discs: disc.speed(self.speed)
 
-    '''
-    def hanoi(self, n, src, dest, temp):
-        """The classical recursive Towers-Of-Hanoi algorithm,
-        implemented as a recursive generator, yielding always None
-        plus an 'important' side effect - the next Hanoi move."""
-        if n > 0:
-            for x in self.hanoi(n - 1, src, temp, dest): yield None
-            yield self.move(src, dest)
-            for x in self.hanoi(n - 1, temp, dest, src): yield None'''
 
     def move(self, src_tower, dest_tower):
         """move uppermost disc of source tower to top of destination
@@ -331,16 +413,17 @@ class HanoiEngine:
         self.moveDisplay(self.moveCnt)
 
 
+
     def reset(self):
         """Setup of (a new) game."""
+        del self.playerMoves[:]
+        del self.goalMoves[:]
         self.ts.tracer(False)
+        global gameStatus, currentStatus
+        gameStatus = "turtle"
         self.moveCnt = 0
         self.moveDisplay(0)
-        #for t in self.towerA, self.towerB, self.towerC:
-        #    t.pop(200)
-        #for k in range(self.nrOfDiscs - 1, -1, -1):
-        #    self.discs[k].config(k, self.nrOfDiscs)
-        #    self.towerA.push(self.discs[k])
+
         self.resetTowers(self.towerA)
         self.resetTowers(self.towerB)
         self.resetTowers(self.towerC)
@@ -354,17 +437,62 @@ class HanoiEngine:
             self.discs.append(Disc(self.setCanvas, self.numValue))
             print self.numValue
 
-
-
         for k in range(self.nrOfDiscs - 1, -1, -1):
-            self.discs[k].config(k, self.nrOfDiscs)
+            self.discs[k].config(k, self.nrOfDiscs)#
             self.towerA.push(self.discs[k])
+
+        gameStatus = "withoutTurtle"
+
+        ''' elson code '''
+        self.startsource.copyFrom(self.towerA) # Save the start state
+        self.starthelper.copyFrom(self.towerB)
+        self.starttarget.copyFrom(self.towerC)
+
+        # Include the start state in sample moves set
+        self.samplemoves.append(self.startsource)
+        self.samplemoves.append(self.starthelper)
+        self.samplemoves.append(self.starttarget)
+        ''' elson code '''
+
+        """ AI attempt to solve """
+        self.gensamplemove(self.towerA, self.towerB, self.towerC)
+
+
+
+        # Printing for checking sample moves set purpose
+        # print "Number of element:",len(samplemoves)
+        # print "Number of minimum steps:",minmoves
+        # for i in range(0, len(samplemoves), 3):
+        #    printprogess(samplemoves[i], samplemoves[i+1], samplemoves[i+2])
+
+        """ Restore start state """
+        self.startstate()
+
+        # Include the start state in user moves set
+        self.usermoves.append(self.startsource)
+        self.usermoves.append(self.starthelper)
+        self.usermoves.append(self.starttarget)
+
+        self.finalmoves.append(self.startsource)
+        self.finalmoves.append(self.starthelper)
+        self.finalmoves.append(self.starttarget)
+
+        gameStatus = "turtle"
+        self.currentStatus = "user"
+
+
+        #for k in range(self.nrOfDiscs - 1, -1, -1):
+        #    self.discs[k].config(k, self.nrOfDiscs)
+        #    self.towerA.push(self.discs[k])
+        #    self.AISource.push(self.discs[k])
 
         print "A:", self.towerA.size()
         print "B:", self.towerB.size()
         print "C:", self.towerC.size()
 
         self.ts.tracer(True)
+
+
         #self.HG = self.hanoi(self.nrOfDiscs,
         #                     self.towerA, self.towerC, self.towerB)
 
@@ -414,26 +542,6 @@ class HanoiEngine:
             universalArray[fillslot] = universalArray[positionOfMax]
             universalArray[positionOfMax] = tmp
 
-    def run(self):
-        """run game ;-)
-        return True if game is over, else False"""
-        self.running = True
-        try:
-            while self.running:
-                result = self.step()
-            return result  # True iff done
-        except StopIteration:  # game over
-            return True
-
-    def step(self):
-        """perform one single step of the game,
-        returns True if finished, else False"""
-        try:
-            self.HG.next()
-            return 2 ** self.nrOfDiscs - 1 == self.moveCnt
-        except TclError:
-            return False
-
     def stop(self):
         """ ;-) """
         self.running = False
@@ -459,11 +567,6 @@ class Hanoi:
         """callback function for nr-of-discs-scale-widget"""
         self.hEngine.nrOfDiscs = self.discs.get()
         self.reset()
-
-    def adjust_speed(self, e):
-        """callback function for speeds-scale-widget"""
-        self.hEngine.speed = self.tempo.get() % 10
-        self.hEngine.setspeed()
 
     def setState(self, STATE):
         """most simple implementation of a finite state machine"""
@@ -519,19 +622,14 @@ class Hanoi:
         elif self.state == "RUNNING":
             self.setState("TIMEOUT")
             self.hEngine.stop()'''
-        #elson code
-        self.hEngine.gensamplemove(self.hEngine.towerA, self.hEngine.towerB, self.hEngine.towerC)
-        #elson code
-        self.hEngine.goaltarget.copyFrom(self.hEngine.towerC) # Save completed target state
 
-    def step(self):
-        """callback function for step button.
-        makes hEngine perform a single step"""
-        self.setState("TIMEOUT")
-        if self.hEngine.step():
-            self.setState("DONE")
-        else:
-            self.setState("PAUSE")
+        '''elson code'''
+        if self.hEngine.solve() is True:
+            self.setState('DONE')
+            self.myHighScore = self.hEngine.storeHighScore()
+            self.updateHighScore(self.highScoreTable, self.myHighScore)
+
+
 
     def intialize(self, cv, nrOfDiscs, speed):
         cv = TurtleScreen(cv)
@@ -630,8 +728,8 @@ class Hanoi:
            stepList.append(hEngine.getTowerA())
            print "tower A hit"
            if len(stepList) == 2:
-               if self.hEngine.checkIfMoveValid(stepList[0], stepList[1]) is True:
-                   hEngine.move(stepList[0], stepList[1])
+               if self.hEngine.checkvalid(stepList[0], stepList[1]) is True:
+                   #hEngine.move(stepList[0], stepList[1])
                    print "A:", self.hEngine.towerA.size(), "value:", self.hEngine.towerA.peek()
                    print "B:", self.hEngine.towerB.size(), "value:", self.hEngine.towerB.peek()
                    print "C:", self.hEngine.towerC.size(), "value:", self.hEngine.towerC.peek()
@@ -669,8 +767,8 @@ class Hanoi:
            stepList.append(hEngine.getTowerB())
            print "tower B hit"
            if len(stepList) == 2:
-               if self.hEngine.checkIfMoveValid(stepList[0], stepList[1]) is True:
-                   hEngine.move(stepList[0], stepList[1])
+               if self.hEngine.checkvalid(stepList[0], stepList[1]) is True:
+                   #hEngine.move(stepList[0], stepList[1])
                    print "A:", self.hEngine.towerA.size(), "value:", self.hEngine.towerA.peek()
                    print "B:", self.hEngine.towerB.size(), "value:", self.hEngine.towerB.peek()
                    print "C:", self.hEngine.towerC.size(), "value:", self.hEngine.towerC.peek()
@@ -707,8 +805,8 @@ class Hanoi:
            stepList.append(hEngine.getTowerC())
            print "tower C hit"
            if len(stepList) == 2:
-               if self.hEngine.checkIfMoveValid(stepList[0], stepList[1]) is True:
-                   hEngine.move(stepList[0], stepList[1])
+               if self.hEngine.checkvalid(stepList[0], stepList[1]) is True:
+                   #hEngine.move(stepList[0], stepList[1])
                    print "A:", self.hEngine.towerA.size(), "value:", self.hEngine.towerA.peek()
                    print "B:", self.hEngine.towerB.size(), "value:", self.hEngine.towerB.peek()
                    print "C:", self.hEngine.towerC.size(), "value:", self.hEngine.towerC.peek()
@@ -745,4 +843,4 @@ class Hanoi:
 
 
 if __name__ == "__main__":
-    Hanoi(2, 3)
+    Hanoi(3, 3)

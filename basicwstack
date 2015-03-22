@@ -103,6 +103,7 @@ def findmatch():
 def solve():
     index = findmatch()
     for j in range(index+3,len(samplemoves),3): # append state after the match
+        print j
         finalmoves.append(samplemoves[j])
         finalmoves.append(samplemoves[j+1])
         finalmoves.append(samplemoves[j+2])
