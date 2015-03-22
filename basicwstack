@@ -1,0 +1,203 @@
+from Stack import *
+
+samplemoves = [] # The set of move generate by AI
+usermoves = [] # The set of move user move
+finalmoves = [] # The final set of move
+
+minmoves = 0
+totalmoves = 0
+
+source = Stack()
+helper = Stack()
+target = Stack()
+
+startsource = Stack()
+starthelper = Stack()
+starttarget = Stack()
+goaltarget = Stack()
+
+def savestate(stack):
+    newstack = Stack()
+    newstack.copyFrom(stack)
+    return newstack
+
+# Restore the stack to start state
+def startstate():
+    global source, helper, target
+    source.copyFrom(startsource)
+    helper.copyFrom(starthelper)
+    target.copyFrom(starttarget)
+
+def printprogess(source, helper, target):
+    print source.gettitle()
+    source.printstack()
+    print helper.gettitle()
+    helper.printstack()
+    print target.gettitle()
+    target.printstack()
+    print("-----------------")
+
+def moveTower(disc, Beg, Aux, End):
+    global minmoves
+    if disc == 1:
+        moveDisk(Beg, End)
+        minmoves += 1
+        samplemoves.append(savestate(source))
+        samplemoves.append(savestate(helper))
+        samplemoves.append(savestate(target))
+        # printprogess(Beg, Aux, End)
+
+    else:
+        moveTower(disc-1, Beg, End, Aux)
+        moveTower(1, Beg, Aux, End)
+        moveTower(disc-1, Aux, Beg, End)
+
+# Move disk from the from stack to to stack
+def moveDisk(frompole,topole):
+    # print("moving disk from",frompole.gettitle(),"to",topole.gettitle())
+    topole.push(frompole.pop())
+
+# generate the sample set of solutions
+def gensamplemove(source, helper, target):
+    moveTower(source.size()-1, source, helper, target)
+
+# Check of the rules of Hanoi
+def checkvalid(frompole, topole):
+    if(frompole.size() == 1 or frompole == topole): # frompole is empty or frompole and topole is same
+        print "Invalid move"
+    else:
+        if(topole.size() == 1 or frompole.peek() < topole.peek()): # topole is empty or from is smaller than to
+            moveDisk(frompole,topole)
+            usermoves.append(savestate(source))
+            usermoves.append(savestate(helper))
+            usermoves.append(savestate(target))
+
+            finalmoves.append(savestate(source))
+            finalmoves.append(savestate(helper))
+            finalmoves.append(savestate(target))
+        else:
+            print "Invalid move"
+
+# Conver the string input to the variable of stack
+def convert(word):
+    if(word == "a"):
+        return source
+    elif(word == "b"):
+        return helper
+    elif(word == "c"):
+        return target
+
+def findmatch():
+    for i in range(len(usermoves)-1,0,-3):
+        # printprogess(usermoves[i-2], usermoves[i-1], usermoves[i])
+        if(i != len(usermoves)-1): # append the backtrack state, only add after first i loop
+            finalmoves.append(usermoves[i-2])
+            finalmoves.append(usermoves[i-1])
+            finalmoves.append(usermoves[i])
+        for j in range(0, len(samplemoves), 3):
+            # printprogess(samplemoves[j], samplemoves[j+1], samplemoves[j+2])
+            if(usermoves[i-2].isEqual(samplemoves[j]) and usermoves[i-1].isEqual(samplemoves[j+1]) and usermoves[i].isEqual(samplemoves[j+2])):
+                index = j
+                return j
+
+def solve():
+    index = findmatch()
+    for j in range(index+3,len(samplemoves),3): # append state after the match
+        finalmoves.append(samplemoves[j])
+        finalmoves.append(samplemoves[j+1])
+        finalmoves.append(samplemoves[j+2])
+
+""" MAIN """
+source.push("Source")
+helper.push("Helper")
+target.push("Target")
+
+# Ask User enter the number of disc
+discvalid = False
+while(discvalid != True):
+    try:
+        numdisc = input("Enter the number of discs: ")
+        while(numdisc <= 0 or numdisc > 10):
+            numdisc = input("Enter the number of discs: ")
+        discvalid = True
+    except:
+        print "invalid input"
+
+# Push in number of discs in source
+for i in range(numdisc, 0, -1):
+    source.push(i)
+startsource.copyFrom(source) # Save the start state
+starthelper.copyFrom(helper)
+starttarget.copyFrom(target)
+
+# Include the start state in sample moves set
+samplemoves.append(startsource)
+samplemoves.append(starthelper)
+samplemoves.append(starttarget)
+
+""" AI attempt to solve """
+gensamplemove(source, helper, target)
+goaltarget.copyFrom(target) # Save completed target state
+
+# Printing for checking sample moves set purpose
+# print "Number of element:",len(samplemoves)
+# print "Number of minimum steps:",minmoves
+# for i in range(0, len(samplemoves), 3):
+#    printprogess(samplemoves[i], samplemoves[i+1], samplemoves[i+2])
+
+""" Restore start state """
+startstate()
+
+# Include the start state in user moves set
+usermoves.append(startsource)
+usermoves.append(starthelper)
+usermoves.append(starttarget)
+
+finalmoves.append(startsource)
+finalmoves.append(starthelper)
+finalmoves.append(starttarget)
+
+""" User attempt to play """
+while (target.isEqual(goaltarget) != True):
+    printprogess(source, helper, target)
+    print "(a = source, b = Helper, c = Target, q = quit, s = solve)"
+    frompole = raw_input("From: ")
+    if(frompole in "abcqs"):
+        if(frompole == "q"):
+            break
+        if(frompole == "s"):
+            solve()
+            break
+        topole = raw_input("To: ")
+        if(topole in "abcqs"):
+            if(topole == "q"):
+                break
+            if(frompole == "s"):
+                solve()
+                break
+            checkvalid(convert(frompole), convert(topole))
+        else:
+            print "invalid input"
+    else:
+        print "invalid input"
+
+
+
+# Printing for checking user moves set purpose
+# print "USERMOVES"
+# print "Number of element:",len(usermoves)
+# for i in range(0, len(usermoves), 3):
+#    printprogess(usermoves[i], usermoves[i+1], usermoves[i+2])
+
+
+# Printing for checking user moves set purpose
+print "FINALMOVES"
+for i in range(0, len(finalmoves), 3):
+   printprogess(finalmoves[i], finalmoves[i+1], finalmoves[i+2])
+
+totalmoves = (len(finalmoves)/3)-1 # minus 1 cause the start state
+print "Total Moves",totalmoves,"Steps"
+
+
+
+
