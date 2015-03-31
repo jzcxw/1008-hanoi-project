@@ -416,11 +416,14 @@ class HanoiEngine:
 
     def reset(self):
         """Setup of (a new) game."""
-        del self.playerMoves[:]
-        del self.goalMoves[:]
+
         self.ts.tracer(False)
         global gameStatus, currentStatus
         gameStatus = "turtle"
+        Hanoi.state = "START"
+
+        del self.playerMoves[:]
+        del self.goalMoves[:]
         self.moveCnt = 0
         self.moveDisplay(0)
 
@@ -489,6 +492,11 @@ class HanoiEngine:
         print "A:", self.towerA.size()
         print "B:", self.towerB.size()
         print "C:", self.towerC.size()
+
+
+
+
+
 
         self.ts.tracer(True)
 
@@ -578,6 +586,9 @@ class Hanoi:
                 self.discsLbl.configure(fg="black")
                 self.resetBtn.configure(state=DISABLED)
                 self.solveBtn.configure(text="solve", state=NORMAL)
+                self.buttonTowerA.configure(text="Tower A", state=NORMAL)
+                self.buttonTowerB.configure(text="Tower B", state=NORMAL)
+                self.buttonTowerC.configure(text="Tower C", state=NORMAL)
             elif STATE == "RUNNING":
                 self.discs.configure(state=DISABLED)
                 self.discs.configure(fg="gray70")
@@ -595,7 +606,11 @@ class Hanoi:
                 self.discs.configure(fg="black")
                 self.discsLbl.configure(fg="black")
                 self.resetBtn.configure(state=NORMAL)
+                #self.solveBtn.configure(text="solve", state=DISABLED)
                 self.solveBtn.configure(text="solve", state=DISABLED)
+                self.buttonTowerA.configure(text="Tower A", state=DISABLED)
+                self.buttonTowerB.configure(text="Tower B", state=DISABLED)
+                self.buttonTowerC.configure(text="Tower C", state=DISABLED)
             elif STATE == "TIMEOUT":
                 self.discs.configure(state=DISABLED)
                 self.discs.configure(fg="gray70")
